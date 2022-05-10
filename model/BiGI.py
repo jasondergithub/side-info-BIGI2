@@ -88,15 +88,13 @@ class BiGI(nn.Module):
 
     def score_predict(self, fea): # fea [batch_size, hidden_dim*2]
         fea = fea.unsqueeze(1)
-        output = self.estimator(fea)
-        out = self.GNN.score_function1(fea, self.opt["batch_size"])
+        output = self.estimator(fea, self.opt["batch_size"])
         out = nn.tanh(out)
         return out.view(out.size()[0], -1)
 
     def score(self, fea):
         fea = fea.unsqueeze(1)
-        output = self.estimator(fea)
-        out = self.GNN.score_function1(fea, self.opt["batch_size"])
+        output = self.estimator(fea, self.opt["batch_size"])
         out = nn.tanh(out)
         # out = torch.sigmoid(out)
         return out.view(-1)
