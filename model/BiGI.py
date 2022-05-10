@@ -90,7 +90,7 @@ class BiGI(nn.Module):
         fea = fea.unsqueeze(1)
         output = self.estimator(fea, self.opt["number_item"])
         out = torch.tanh(output)
-        return out.view(out.size()[0], -1)
+        return out.squeeze(1)
 
     def score(self, fea):
         fea = fea.unsqueeze(1)
