@@ -106,7 +106,11 @@ class DGITrainer(Trainer):
         Item_feature = Item_feature.repeat(User_feature.size()[0], 1, 1)
         Feature = torch.cat((User_feature, Item_feature),
                             dim=-1)
-        output = self.model.score_predict(Feature)
+        prob_list = []
+        for i in range(self.opt["batch_size"]):
+            prob = self.model.score_predict(Feature[i])
+            prob_list.append(prob)
+        output = torch.stack(prob_list)
         output_list, recommendation_list = output.sort(descending=True)
         return recommendation_list.cpu().numpy()
 
