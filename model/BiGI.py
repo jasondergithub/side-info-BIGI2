@@ -9,6 +9,25 @@ from model.AttDGI import AttDGI
 from model.myDGI import myDGI
 from model.pretrained_ml100k import pretrained, genreEncoder, genreDecoder
 
+class Score_predict(nn.Module):
+    def __init__(self, opt):  
+        super(Score_predict, self).__init__() 
+        self.opt = opt     
+        self.conv1 = nn.Conv1d(1, 16, 3)
+        self.conv2 = nn.Conv1d(16, 8, 3)
+        self.relu = nn.LeakyReLU(0.1)
+        self.fc = nn.Linear(8 * (opt["hidden_dim"]*2 - (3-1)*2), 1)
+    
+    def forward(self, mixup_feature, outputSize):
+        output = self.conv1(mixup_feature)
+        output = self.relu(output)
+        output = self.conv2(output)
+        output = self.relu(output)
+        output = output.reshape(outputSize, -1)
+        output = self.fc(output)
+        return output
+
+
 class BiGI(nn.Module):
     def __init__(self, opt):
         super(BiGI, self).__init__()
@@ -18,6 +37,7 @@ class BiGI(nn.Module):
             self.DGI = AttDGI(opt) # Since pytorch is not support sparse matrix well
         else :
             self.DGI = myDGI(opt) # Since pytorch is not support sparse matrix well
+        self.estimator = Score_predict(opt)
         self.dropout = opt["dropout"]
 
         # load pretrained user feature and item feature
@@ -66,17 +86,18 @@ class BiGI(nn.Module):
             self.item_index = self.item_index.cuda()
             self.user_index = self.user_index.cuda()
 
-    def score_predict(self, fea):
-        out = self.GNN.score_function1(fea)
-        out = F.relu(out)
-        out = self.GNN.score_function2(out)
-        # out = torch.sigmoid(out)
+    def score_predict(self, fea): # fea [batch_size, hidden_dim*2]
+        fea = fea.unsqueeze(1)
+        output = self.estimator(fea)
+        out = self.GNN.score_function1(fea, self.opt["batch_size"])
+        out = nn.tanh(out)
         return out.view(out.size()[0], -1)
 
     def score(self, fea):
-        out = self.GNN.score_function1(fea)
-        out = F.relu(out)
-        out = self.GNN.score_function2(out)
+        fea = fea.unsqueeze(1)
+        output = self.estimator(fea)
+        out = self.GNN.score_function1(fea, self.opt["batch_size"])
+        out = nn.tanh(out)
         # out = torch.sigmoid(out)
         return out.view(-1)
 
