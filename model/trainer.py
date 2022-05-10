@@ -211,5 +211,5 @@ class DGITrainer(Trainer):
         loss.backward()
         self.optimizer.step()
         for p in self.model.DGI.parameters():            
-            p.data.clamp_(-0.1, 0.1)        
+            p.data.clamp_(-0.15, 0.15)        
         return loss.item()
