@@ -111,7 +111,7 @@ class DGITrainer(Trainer):
             prob = self.model.score_predict(Feature[i])
             prob_list.append(prob)
         output = torch.stack(prob_list)
-        print(output.shape)
+        # print(output.shape)
         output_list, recommendation_list = output.sort(descending=True)
         return recommendation_list.cpu().numpy()
 
